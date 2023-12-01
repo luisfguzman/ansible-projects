@@ -1,0 +1,59 @@
+---
+- name: Install Docker on EC2
+  hosts: docker_server
+  become: yes
+  become_user: root
+  tasks:
+  - name: Make sure docker and docker-compose are available
+    yum:
+      name:
+      - python3-pip
+      - docker
+      update_cache: yes
+      state: present
+  - name: Install docker-compose
+    get_url:
+      url: https://github.com/docker/compose/releases/latest/download/docker-compose-Linux-{{lookup('pipe', 'uname -m')}}
+      dest: /usr/local/bin/docker-compose
+      mode: +x
+  - name: Ensure docker daemon is running
+    systemd:
+      name: docker
+      state: started
+  - name: Install docker python module
+    become: yes
+    become_user: ec2-user
+    pip:
+      name:
+      - docker
+      - docker-compose
+
+- name: Create new linux user
+  hosts: docker_server
+  become: yes
+  tasks: 
+    - name: Create new linux user
+      ansible.builtin.user:
+        name: docker-user
+        groups: adm,docker
+
+- name: Start docker containers
+  hosts: docker_server
+  become: yes
+  become_user: docker-user
+  vars_files:
+  - project-vars.json
+  tasks:
+  - name: Copy docker-compose file
+    copy:
+      src: /home/luisfguzman/bootcamp-java-mysql/docker-compose.yaml
+      dest: /home/docker-user/docker-compose.yaml
+  - name: Docker login to Docker Hub
+    community.docker.docker_login:
+      registry_url: https://index.docker.io/v1
+      username: foundryvault
+      password: "{{docker_password}}"
+  - name: Start containers from compose file
+    community.docker.docker_compose:
+      project_src: /home/docker-user
+      #state: present # default state | sames asdocker-compose up

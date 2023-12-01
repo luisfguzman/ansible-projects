@@ -1,0 +1,4 @@
+version: 1.0.0
+location: /home/luisfguzman/ansible-projects/
+linux_name: nodejs
+destination: /home/{{linux_name}}

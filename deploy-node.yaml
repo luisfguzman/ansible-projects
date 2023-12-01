@@ -1,0 +1,51 @@
+---
+- name: Install node and npm
+  hosts: webserver
+  tasks:
+  - name: Update apt repo and update_cache
+    apt: update_cache=yes force_apt_get=yes cache_valid_time=3600
+  - name: Install nodejs and npm
+    apt:
+      pkg:
+      - nodejs
+      - npm
+
+- name: Create new linux user for node app
+  hosts: webserver
+  vars_files:
+    - project-vars.yaml
+  tasks:
+  - name: Create linux user
+    user:
+      name: "{{linux_name}}"
+      comment: NodeJS user to run app_status
+      group: admin
+    register: user_creation_result
+  - debug: msg={{user_creation_result}}
+
+- name: Deploy nodejs app
+  hosts: webserver
+  become: True
+  become_user: "{{linux_name}}"
+  vars_files:
+    - project-vars.json
+  tasks:
+  - name: Unpack the nodejs file
+    unarchive:
+      src: "{{location}}/nodejs-app-{{version}}.tgz" #/home/luisfguzman/ansible-projects/nodejs-app-1.0.0.tgz
+      dest: "{{destination}}"
+    register: unpack_result
+  - debug: msg={{unpack_result}}
+  - name: Install nodejs dependencies
+    npm:
+      path: "{{destination}}/package"
+  - name: Start the nodejs application
+    command:
+      chdir: "{{destination}}/package/app"
+      cmd: node server
+    async: 1000
+    poll: 0
+  - name: Ensure app is running
+    shell: ps aux | grep node
+    register: app_status
+  - debug: msg={{app_status.stdout_lines}}

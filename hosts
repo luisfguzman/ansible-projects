@@ -1,0 +1,14 @@
+[nexus]
+18.118.140.147
+
+[nexus:vars]
+ansible_ssh_private_key_file=~/ansible-projects/ansible-key.pem
+ansible_user=root
+
+[docker_server]
+18.222.238.78
+
+[docker_server:vars]
+ansible_ssh_private_key_file=~/.ssh/id_ed25519
+ansible_user=ec2-user
+ansible_python_interpreter=/usr/bin/python3.9

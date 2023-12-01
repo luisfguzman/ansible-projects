@@ -1,0 +1,13 @@
+---
+- name: Create nginx web server
+  hosts: webserver
+  tasks:
+  - name: Install nginx server
+    apt:
+      name: nginx=1.18.0-6ubuntu14.4
+      state: present
+      update_cache: yes
+  - name: Start nginx server
+    service:
+      name: nginx
+      state: started
